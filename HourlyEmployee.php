@@ -23,4 +23,3 @@ class HourlyEmployee extends Employee {
         return $this->hourlyRate;
     }
 }
-?>
