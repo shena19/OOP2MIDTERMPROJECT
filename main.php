@@ -1,79 +1,102 @@
 <?php
 
-class EmployeeRoster {
-
+class Main {
     private EmployeeRoster $roster;
     private $size;
-    private $repeat;
 
     public function start() {
         $this->clear();
-        $this->repeat = true;
+        $this->size = (int) readline("Enter the size of the roster: ");
 
-        $this->size = readline("Enter the size of the roster: ");
-
-        if ($this->size < 1) {
+        if($this->size < 1) {
             echo "Invalid input. Please try again.\n";
             readline("Press \"Enter\" key to continue...");
             $this->start();
         }
 
-    }
+        $this->roster = new EmployeeRoster($this->size);
 
-    public function entrance() {
-        $choice = 0;
-
-        while ($this->repeat) {
-            $this->clear();
-            $this->menu();
-
-            switch ($choice) {
-                case 1:
-                    break;
-                case 2:
-                    break;
-                case 3:
-                    break;
-                case 0:
-                    break;
-                default:
-                    echo "Invalid input. Please try again.\n";
-                    readline("Press \"Enter\" key to continue...");
-                    $this->entrance();
-                    break;
-            }
-        }
-        echo "Process terminated.\n";
-        exit;
+        $this->menu();
     }
 
     public function menu() {
+        $this->clear();
+        $count = $this->roster->count();
+
+        echo "Available Space on the roster:" . ($this->size - $count) . "\n" ;
         echo "*** EMPLOYEE ROSTER MENU ***\n";
         echo "[1] Add Employee\n";
         echo "[2] Delete Employee\n";
         echo "[3] Other Menu\n";
         echo "[0] Exit\n";
+
+        $choice = readline("Pick from the menu: ");
+
+        switch ($choice) {
+            case 1:
+                if($this->roster->count() >= $this->size) {
+                    echo "Roster is Full\n";
+                    readline("Press \"Enter\" key to continue...");
+                    $this->menu();
+                    break;
+                }
+
+                $this->addMenu();
+                break;
+            case 2:
+                $this->deleteMenu();
+                break;
+            case 3:
+                $this->otherMenu();
+                break;
+            case 0:
+                break;
+            default:
+                echo "Invalid input. Please try again.\n";
+                readline("Press \"Enter\" key to continue...");
+                $this->menu();
+                break;
+        }
+
+        echo "Process terminated.\n";
+        exit;
     }
 
     public function addMenu() {
+        $this->clear();
+
+        echo "Add Employee\n";
+        echo "---Employee Details \n";
+
+        $name = readline("Enter name: ");
+        $address = readline("Enter address: ");
+        $cName = readline("Enter company name: ");
+        $age = (int) readline("Enter age: ");
+
+        $this->empType($name, $address, $age, $cName);
     }
 
     public function empType($name, $address, $age, $cName) {
         $this->clear();
+
         echo "---Employee Details \n";
         echo "Enter name: $name\n";
         echo "Enter address: $address\n";
         echo "Enter company name: $cName\n";
         echo "Enter age: $age\n";
-        echo "[1] Commission Employee       [2] Hourly Employee       [3] Piece Worker";
+
+        echo "[1] Commission Employee       [2] Hourly Employee       [3] Piece Worker\n";
         $type = readline("Type of Employee: ");
 
         switch ($type) {
             case 1:
+                $this->addOnsCE($name, $address, $age, $cName);
                 break;
             case 2:
+                $this->addOnsHE($name, $address, $age, $cName);
                 break;
             case 3:
+                $this->addOnsPE($name, $address, $age, $cName);
                 break;
             default:
                 echo "Invalid input. Please try again.\n";
@@ -81,17 +104,34 @@ class EmployeeRoster {
                 $this->empType($name, $address, $age, $cName);
                 break;
         }
+
     }
 
     public function addOnsCE($name, $address, $age, $cName) {
+        $regularSalary = (int) readline("Enter Regular Salary: ");
+        $numberOfItems = (int) readline("Enter # of Items: ");
+        $commission = (int) readline("Enter commission (%): ");
+
+        $ce = new CommissionEmployee($regularSalary,  $numberOfItems, $commission, $name, $address, $age, $cName);
+        $this->roster->add($ce);
         $this->repeat();
     }
 
     public function addOnsHE($name, $address, $age, $cName) {
+        $hoursWorked = (int) readline("Enter hours worked: ");
+        $rate = (int) readline("Enter rate: ");
+
+        $he = new HourlyEmployee($hoursWorked, $rate, $name, $address, $age, $cName);
+        $this->roster->add($he);
         $this->repeat();
     }
 
     public function addOnsPE($name, $address, $age, $cName) {
+        $items = (int) readline("Enter # of items: ");
+        $wage = (int) readline("Enter wage per item: ");
+
+        $pe = new PieceWorker($items, $wage, $name, $address, $age, $cName);
+        $this->roster->add($pe);
         $this->repeat();
     }
 
@@ -100,9 +140,29 @@ class EmployeeRoster {
 
         echo "***List of Employees on the current Roster***\n";
 
+        $this->roster->display();
+
         echo "\n[0] Return\n";
 
+        $index = (int) readline("Select Employee to Remove (use the assigned #): ");
+
+        if($index == 0) {
+            $this->menu();
+            return;
+        } 
+
+        if($index < 0 || $index > $this->size) {
+            echo "Invalid employee number\n";
+        } else {
+            if($this->roster->remove($index - 1)) {
+                echo "Employee was successfuly removed!";
+            } else {
+                echo "Slot is empty";
+            }
+        }
+
         readline("\nPress \"Enter\" key to continue...");
+
         $this->deleteMenu();
     }
 
@@ -116,12 +176,16 @@ class EmployeeRoster {
 
         switch ($choice) {
             case 1:
+                $this->displayMenu();
                 break;
             case 2:
+                $this->countMenu();
                 break;
             case 3:
+                $this->payroll();
                 break;
             case 0:
+                $this->menu();
                 break;
 
             default:
@@ -143,14 +207,19 @@ class EmployeeRoster {
 
         switch ($choice) {
             case 0:
+                $this->otherMenu();
                 break;
             case 1:
+                $this->roster->display();
                 break;
             case 2:
+                $this->roster->displayCE();
                 break;
             case 3:
+                $this->roster->displayHE();
                 break;
             case 4:
+                $this->roster->displayPE();
                 break;
 
             default:
@@ -173,15 +242,19 @@ class EmployeeRoster {
 
         switch ($choice) {
             case 0:
+                $this->otherMenu();
                 break;
-
             case 1:
+                echo "Total Employee on the Roster: " . $this->roster->count();
                 break;
             case 2:
+                echo "Total Commissioned Employee on the Roster: " . $this->roster->countCE();
                 break;
             case 3:
+                echo "Total Hourly Employee on the Roster: " . $this->roster->countHE();
                 break;
             case 4:
+                echo "Total Piece Worker on the Roster: " . $this->roster->countPE();
                 break;
 
             default:
@@ -189,13 +262,20 @@ class EmployeeRoster {
                 break;
         }
 
-
         readline("\nPress \"Enter\" key to continue...");
         $this->countMenu();
     }
 
+    public function payroll() {
+        $this->clear();
+        $this->roster->payroll();
+
+        readline("\nPress \"Enter\" key to continue...");
+        $this->otherMenu();
+    }
+
     public function clear() {
-        system('clear');
+        echo "\033[2J\033[H";
     }
 
     public function repeat() {
@@ -205,118 +285,13 @@ class EmployeeRoster {
             if (strtolower($c) == 'y')
                 $this->addMenu();
             else
-                $this->entrance();
+                $this->menu();
 
         } else {
             echo "Roster is Full\n";
             readline("Press \"Enter\" key to continue...");
-            $this->entrance();
-        }
-    }
-
-class Person {
-    protected $name;
-    protected $address;
-
-    public function __construct($name, $address) {
-        $this->name = $name;
-        $this->address = $address;
-    }
-
-    public function getName() {
-        return $this->name;
-    }
-
-    public function getAddress() {
-        return $this->address;
-    }
-}
-require_once 'Person.php';
-
-abstract class Employee extends Person {
-    protected $id;
-
-    public function __construct($name, $address, $id) {
-        parent::__construct($name, $address);
-        $this->id = $id;
-    }
-
-    abstract public function earnings();
-
-    public function getId() {
-        return $this->id;
-    }
-}
-require_once 'Employee.php';
-
-class CommissionEmployee extends Employee {
-    private $sales;
-    private $commissionRate;
-
-    public function __construct($name, $address, $id, $sales, $commissionRate) {
-        parent::__construct($name, $address, $id);
-        $this->sales = $sales;
-        $this->commissionRate = $commissionRate;
-    }
-
-    public function earnings() {
-        return $this->sales * $this->commissionRate;
-    }
-}
-require_once 'Employee.php';
-
-class HourlyEmployee extends Employee {
-    private $hoursWorked;
-    private $hourlyRate;
-
-    public function __construct($name, $address, $id, $hoursWorked, $hourlyRate) {
-        parent::__construct($name, $address, $id);
-        $this->hoursWorked = $hoursWorked;
-        $this->hourlyRate = $hourlyRate;
-    }
-
-    public function earnings() {
-        return $this->hoursWorked * $this->hourlyRate;
-    }
-}
-require_once 'Employee.php';
-
-class PieceWorker extends Employee {
-    private $piecesProduced;
-    private $ratePerPiece;
-
-    public function __construct($name, $address, $id, $piecesProduced, $ratePerPiece) {
-        parent::__construct($name, $address, $id);
-        $this->piecesProduced = $piecesProduced;
-        $this->ratePerPiece = $ratePerPiece;
-    }
-
-    public function earnings() {
-        return $this->piecesProduced * $this->ratePerPiece;
-    }
-}
-
-class EmployeeRoster {
-    private $employees = [];
-
-    public function addEmployee(Employee $employee) {
-        $this->employees[] = $employee;
-    }
-
-    public function getTotalEarnings() {
-        $total = 0;
-        foreach ($this->employees as $employee) {
-            $total += $employee->earnings();
-        }
-        return $total;
-    }
-
-    public function listEmployees() {
-        foreach ($this->employees as $employee) {
-            echo "ID: " . $employee->getId() . ", Name: " . $employee->getName() . ", Earnings: " . $employee->earnings() . "\n";
+            $this->menu();
         }
     }
 }
-
-
-?>
+?> 
